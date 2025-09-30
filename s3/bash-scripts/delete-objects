@@ -1,0 +1,16 @@
+#!/usr/bin/env bash
+echo "delete objects from bucket"
+
+set -e
+
+# check if at least 1 argument is provided
+if [ -z "$1" ]; then  # use -z instead of [ "$#" -eq 0 ] to check for empty string
+    echo "No bucket name provided"
+    exit 1
+fi
+
+BUCKET_NAME=$1
+
+echo "preview deleting objects from $BUCKET_NAME"
+aws s3 ls s3://$BUCKET_NAME --recursive
+aws s3 rm s3://$BUCKET_NAME --recursive
