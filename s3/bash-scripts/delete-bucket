@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+echo "delete bucket $1"
+
+# check if at least 1 argument is provided
+if [ -z "$1" ]; then  # use -z instead of [ "$#" -eq 0 ] to check for empty string
+    echo "No bucket name provided"
+    exit 1
+fi
+
+BUCKET_NAME="$1"
+
+aws s3api delete-bucket \
+  --bucket "$BUCKET_NAME"

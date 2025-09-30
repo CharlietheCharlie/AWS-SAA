@@ -1,0 +1,25 @@
+#!/usr/bin/env bash
+echo "create bucket $1"
+
+# check if at least 1 argument is provided
+if [ -z "$1" ]; then  # use -z instead of [ "$#" -eq 0 ] to check for empty string
+    echo "No bucket name provided"
+    exit 1
+fi
+
+BUCKET_NAME="$1"
+REGION="ap-northeast-1"
+
+if [ "$REGION" = "us-east-1" ]; then
+    aws s3api create-bucket \
+      --bucket "$BUCKET_NAME" --region "$REGION" \
+      --query "Location" \
+      --output text
+else
+    aws s3api create-bucket \
+      --bucket "$BUCKET_NAME" \
+      --region "$REGION" \
+      --create-bucket-configuration LocationConstraint="$REGION" \
+      --query "Location" \
+      --output text
+fi

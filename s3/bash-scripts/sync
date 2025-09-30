@@ -1,0 +1,44 @@
+#!/usr/bin/env bash
+echo "sync $1"
+
+# check if at least 1 argument is provided
+if [ -z "$1" ]; then  # use -z instead of [ "$#" -eq 0 ] to check for empty string
+    echo "No bucket name provided"
+    exit 1
+fi
+
+# check for file name prefix
+if [ -z "$2" ]; then  # use -z instead of [ "$#" -eq 0 ] to check for empty string
+    echo "No file name prefix provided"
+    exit 1
+fi
+
+BUCKET_NAME="$1"
+FILENAME_PREFIX="$2"
+
+
+# exit if any command fails
+set -e
+
+OUTPUT_DIR='/tmp/s3-bash-scripts'
+
+# delete the output directory
+rm -rf $OUTPUT_DIR 2> /dev/null # ignore error if directory doesn't exist
+# create the output directory
+mkdir -p $OUTPUT_DIR
+
+NUMFILES=$(( ( RANDOM % 10 )  + 1 ))
+
+for i in $(seq 1 $NUMFILES); do
+    # generate a random filename
+    FILENAME="$OUTPUT_DIR/$FILENAME_PREFIX-$(uuidgen).txt"
+
+    # generate a random file contents
+    dd if=/dev/urandom of=$FILENAME bs=1024 count=1024 # 1MB
+done
+
+tree $OUTPUT_DIR
+
+
+aws s3 sync $OUTPUT_DIR s3://$BUCKET_NAME
+
