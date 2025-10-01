@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: 2010-09-09
 Description: A simple S3 bucket
 Resources:
-  S3Bucket:
+  S3Bucket: # name whatever you like
     Type: 'AWS::S3::Bucket'
     DeletionPolicy: Retain
     Properties:
