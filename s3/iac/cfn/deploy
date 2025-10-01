@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+
+echo "deploy s3 bucket through cloudformation"
+
+aws cloudformation deploy \
+    --template-file template.yaml \
+    --stack-name s3-bucket \
+    --region ap-northeast-1
