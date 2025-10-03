@@ -1,0 +1,35 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Create a role for us to assume and create a resource to access
+Parameters:
+  BucketName:
+    Type: String
+    Default: my-bucket-cw8333
+    Description: The name of the bucket to create
+Resources:
+  S3Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+  StsRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              # Service: s3.amazonaws.com 沒用 因為通常是由其他服務扮演登入者存取S3
+              AWS: arn:aws:iam::861164220281:user/sts-test-user-96gg # 讓這個無權限使用者能assume
+            Action: sts:AssumeRole
+      Path: /
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: 's3:*'
+                Resource: [!Sub "arn:aws:s3:::*",!Sub "arn:aws:s3:::${BucketName}",!Sub "arn:aws:s3:::${BucketName}/*"]
+      
+    
+    
