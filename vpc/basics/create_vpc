@@ -1,0 +1,67 @@
+#!/usr/bin/env bash
+set -e
+
+#create vpc
+VPC_ID=$(aws ec2 create-vpc \
+    --cidr-block 172.1.0.0/16 \
+    --region ap-northeast-1 \
+    --tag-specifications 'ResourceType=vpc,Tags=[{Key=Name,Value=my-example-vpc}]' \
+    --query 'Vpc.VpcId' \
+    --output text)
+
+echo $VPC_ID
+
+#enable DNS hostnames
+aws ec2 modify-vpc-attribute \
+    --vpc-id $VPC_ID \
+    --enable-dns-hostnames \
+    --region ap-northeast-1 \
+    --output text
+
+#create IGW
+IGW_ID=$(aws ec2 create-internet-gateway \
+    --region ap-northeast-1 \
+    --tag-specifications 'ResourceType=internet-gateway,Tags=[{Key=Name,Value=my-example-igw}]' \
+    --query 'InternetGateway.InternetGatewayId' \
+    --output text)
+
+echo $IGW_ID
+
+#attach IGW to vpc
+aws ec2 attach-internet-gateway \
+    --vpc-id $VPC_ID \
+    --internet-gateway-id $IGW_ID
+
+#create subnet
+SUBNET_ID=$(aws ec2 create-subnet \
+    --vpc-id $VPC_ID \
+    --region ap-northeast-1 \
+    --tag-specifications 'ResourceType=subnet,Tags=[{Key=Name,Value=my-example-subnet}]' \
+    --cidr-block 172.1.0.0/24 \
+    --query 'Subnet.SubnetId' \
+    --output text)
+
+echo $SUBNET_ID
+
+# auto assign ipv4 address
+aws ec2 modify-subnet-attribute \
+    --subnet-id $SUBNET_ID \
+    --map-public-ip-on-launch 
+
+#explicity associate new subnet
+RT_ID=$(aws ec2 describe-route-tables \
+ --filters "Name=vpc-id,Values=$VPC_ID" \
+ --query 'RouteTables[0].RouteTableId' \
+ --output text)
+
+echo $RT_ID
+
+aws ec2 associate-route-table \
+    --subnet-id $SUBNET_ID \
+    --route-table-id $RT_ID
+
+# create route to IGW
+aws ec2 create-route \
+    --route-table-id $RT_ID \
+    --destination-cidr-block 0.0.0.0/0 \
+    --gateway-id $IGW_ID
