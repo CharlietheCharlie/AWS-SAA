@@ -1,0 +1,29 @@
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Create IAM User with Managed and Inline Policy
+
+Resources:
+  MyUser:
+    Type: AWS::IAM::User
+    Properties:
+      UserName: my-custom-user
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/job-function/ViewOnlyAccess
+      Policies:
+        - PolicyName: my-custom-policy
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:ListBucket
+                Resource: arn:aws:s3:::my-example-bucket
+              - Effect: Allow
+                Action:
+                  - s3:GetObject
+                Resource: arn:aws:s3:::my-example-bucket/*
+
+
+
+
+## aws cloudformation create-stack --stack-name my-iam-user-stack --template-body file://template.yaml   --capabilities CAPABILITY_NAMED_IAM
