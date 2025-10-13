@@ -1,0 +1,49 @@
+#!/usr/bin/env bash
+set -e
+
+STACK_NAME="sns-lambda-demo"
+REGION="ap-northeast-1"
+
+echo "✅ Step 1: Build SAM template"
+sam build
+
+echo "🚀 Step 2: Deploy stack"
+sam deploy --stack-name $STACK_NAME --region $REGION --capabilities CAPABILITY_IAM --no-confirm-changeset --resolve-s3 --no-fail-on-empty-changeset
+
+echo "🔍 Step 3: Get SNS topic ARN"
+TOPIC_ARN=$(aws cloudformation describe-stacks \
+  --stack-name $STACK_NAME \
+  --region $REGION \
+  --query "Stacks[0].Outputs[?OutputKey=='MyTopicArn'].OutputValue" \
+  --output text)
+
+if [ -z "$TOPIC_ARN" ]; then
+  # 如果 template 沒有 Output，直接抓資源
+  TOPIC_ARN=$(aws sns list-topics \
+    --region $REGION \
+    --query "Topics[?contains(TopicArn, 'my-sns-topic')].TopicArn" \
+    --output text)
+fi
+
+echo "🪣 SNS Topic ARN: $TOPIC_ARN"
+
+echo "📨 Step 4: Publish test message"
+aws sns publish \
+  --topic-arn "$TOPIC_ARN" \
+  --message '{"event":"test","from":"bash"}' \
+  --region $REGION
+
+echo "🧾 Step 5: Check CloudWatch logs"
+LAMBDA_NAME=$(aws lambda list-functions \
+  --region $REGION \
+  --query "Functions[?contains(FunctionName,'LambdaFunction')].FunctionName" \
+  --output text)
+
+echo "Lambda function: $LAMBDA_NAME"
+echo "Fetching logs..."
+aws logs filter-log-events \
+  --log-group-name "/aws/lambda/$LAMBDA_NAME" \
+  --region $REGION \
+  --limit 5 \
+  --query "events[].message" \
+  --output text
