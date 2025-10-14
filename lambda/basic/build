@@ -1,0 +1,28 @@
+#!/usr/bin/env bash
+
+echo "Building lambda"
+
+# build the lambda function
+sam build
+
+echo "Build complete"
+
+# deploy the lambda function
+sam deploy --stack-name lambda-demo --region ap-northeast-1 --capabilities CAPABILITY_IAM --no-fail-on-empty-changeset --guided
+echo "Deployment complete" 
+
+# get the lambda function name
+FUNCTION_NAME=$(aws lambda list-functions --region ap-northeast-1 --query 'Functions[0].FunctionName' --output text)
+echo $FUNCTION_NAME
+
+# invoke the lambda function
+aws lambda invoke \
+  --function-name $FUNCTION_NAME \
+  --region ap-northeast-1 \
+  --payload '{"first_name": "John", "last_name": "Doe"}' \
+  --cli-binary-format raw-in-base64-out \
+  output.txt
+cat output.txt
+
+
+echo "Invocation complete"
